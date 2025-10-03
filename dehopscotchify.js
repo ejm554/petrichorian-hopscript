@@ -166,8 +166,15 @@ function addCustomRuleOrObject(customRuleOrObject) {
 				return addCustomRuleInstance(maybeCustomRuleInstance)
 		}
 		const rule = project.rules.find(e=>e.id==ruleId)
-		if (!rule)
-			throw `Could not find rule with id ${ruleId}`
+		if (!rule) {
+			// Could be an older project, synthesize a custom rule instance and try that.
+			const syntheticCustomRuleInstance = {
+				customRuleID: ruleId,
+				id: "Junk",
+				parameters: [] // This project would predate custom rule parameters in the case where this is relevant.
+			}
+			return addCustomRuleInstance(syntheticCustomRuleInstance)
+		}
 		addRule(rule)
 	})
 }
