@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+console.log("HIIII")
 const fs = require('fs')
 const parser = require('./core/htn.js')
 
@@ -20,7 +21,11 @@ const blockNamesByHSType = function() {
 	for (const name in blockTypes) {
 		if (Object.hasOwnProperty.call(blockTypes, name)) {
 			const typeDefinition = blockTypes[name];
-			result[typeDefinition.type] = {name: name, typeDefinition: typeDefinition}
+			if (!result[typeDefinition.type]) {
+				result[typeDefinition.type] = [{name: name, typeDefinition: typeDefinition}]
+			} else {
+				result[typeDefinition.type].push({name: name, typeDefinition: typeDefinition})
+			}
 		}
 	}
 	return result
@@ -162,7 +167,7 @@ function addCustomRuleOrObject(customRuleOrObject) {
 		}
 		const rule = project.rules.find(e=>e.id==ruleId)
 		if (!rule)
-			throw `Could not find rule with id ${ruleId} from object ${hsObject.name}`
+			throw `Could not find rule with id ${ruleId}`
 		addRule(rule)
 	})
 }
@@ -214,7 +219,8 @@ function addBlock(hsBlock, parametersKey) {
 		}
 		return
 	}
-	const block = blockNamesByHSType[hsBlock.type] || ((hsBlock.type == 22) ? ({typeDefinition: {parameters: []}, name: "ae"}) : console.log(hsBlock.type))
+	const blocks = blockNamesByHSType[hsBlock.type] || ((hsBlock.type == 22) ? ({typeDefinition: {parameters: []}, name: "ae"}) : console.log(hsBlock.type))
+	const block = blockFor(hsBlock, blocks, parametersKey)
 	if (!block)
 		throw "Undefined block type " + hsBlock.type
 	if (block.name == "set")
@@ -442,4 +448,13 @@ function findInObject(object, predicate) {
 		}
 	}
 	return null
+}
+
+
+function blockFor(hsBlock, options, parametersKey) {
+	if (options.length == 0)
+		return null
+	if (options.length == 1)
+		return options[0]
+	return options.find(e=>e.typeDefinition.parameters.length == (hsBlock[parametersKey]?.length || 0))
 }
