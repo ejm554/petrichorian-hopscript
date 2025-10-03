@@ -155,9 +155,11 @@ function addCustomRuleOrObject(customRuleOrObject) {
 	}
 	customRuleOrObject.rules.forEach(ruleId => {
 		newLine()
-		const maybeCustomRuleInstance = project.customRuleInstances.find(cri=>cri.id == ruleId)
-		if (maybeCustomRuleInstance)
-			return addCustomRuleInstance(maybeCustomRuleInstance)
+		if (!!project.customRuleInstances) {
+			const maybeCustomRuleInstance = project.customRuleInstances.find(cri=>cri.id == ruleId)
+			if (maybeCustomRuleInstance)
+				return addCustomRuleInstance(maybeCustomRuleInstance)
+		}
 		const rule = project.rules.find(e=>e.id==ruleId)
 		if (!rule)
 			throw `Could not find rule with id ${ruleId} from object ${hsObject.name}`
