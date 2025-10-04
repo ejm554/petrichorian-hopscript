@@ -1,6 +1,39 @@
 // extract-hopscotch-json.js
 const fs = require('fs');
+const AdmZip = require('adm-zip');
 const path = require('path');
+
+function processZipOrHTML(inputPath) {
+    const ext = path.extname(inputPath).toLowerCase();
+    let htmlContent;
+    
+    if (ext === '.zip') {
+        const zip = new AdmZip(inputPath);
+        const zipEntries = zip.getEntries();
+        
+        // Find the HTML file in the zip
+        const htmlEntry = zipEntries.find(entry => 
+            entry.entryName.endsWith('.html')
+        );
+        
+        if (!htmlEntry) {
+            throw new Error('No HTML file found in zip archive');
+        }
+        
+        htmlContent = htmlEntry.getData().toString('utf8');
+    } else if (ext === '.html') {
+        htmlContent = fs.readFileSync(inputPath, 'utf8');
+    } else {
+        throw new Error(`Unsupported file type: ${ext}. Expected .html or .zip file`);
+    }
+    
+    // Validate it's actually Hopscotch HTML
+    if (!htmlContent.includes('data=') || !htmlContent.includes('hopscotch')) {
+        throw new Error('File does not appear to be a Hopscotch HTML export');
+    }
+    
+    return htmlContent;
+}
 
 function extractJSON(htmlContent) {
     // Find the data attribute (handle both quote styles)
@@ -76,7 +109,7 @@ if (require.main === module) {
     const outputFile = outputIndex !== -1 ? args[outputIndex + 1] : null;
     
     try {
-        const htmlContent = fs.readFileSync(inputFile, 'utf8');
+        const htmlContent = processZipOrHTML(inputFile);
         const jsonString = extractJSON(htmlContent);
         
         // Validate JSON
@@ -94,4 +127,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { extractJSON };
+module.exports = { extractJSON, processZipOrHTML };
